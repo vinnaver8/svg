@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>3D Animation with Black Background</title>
   <script type="module">
-    import React, { useRef } from 'https://cdn.skypack.dev/react@19.1.0';
-    import ReactDOM from 'https://cdn.skypack.dev/react-dom@19.1.0';
-    import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber@9.1.2';
-    import * as THREE from 'https://cdn.skypack.dev/three@0.176.0';
+    import React, { useRef } from 'https://esm.sh/react@19.1.0';
+    import { createRoot } from 'https://esm.sh/react-dom@19.1.0/client';
+    import { Canvas, useFrame } from 'https://esm.sh/@react-three/fiber@9.1.2';
+    import * as THREE from 'https://esm.sh/three@0.176.0';
 
     function Scene() {
       const cubeRef = useRef();
 
-      useFrame((state, delta) => {
-        // Rotate the cube for some animation
+      useFrame(() => {
         cubeRef.current.rotation.x += 0.01;
         cubeRef.current.rotation.y += 0.01;
       });
@@ -36,7 +35,7 @@
           <Canvas
             style={{ width: '100vw', height: '100vh' }}
             camera={{ position: [0, 0, 5], fov: 75 }}
-            gl={{ clearColor: 'black' }} // Set background to black
+            gl={{ clearColor: 'black' }}
           >
             <Scene />
           </Canvas>
@@ -44,10 +43,12 @@
       );
     }
 
-    ReactDOM.render(<App />, document.getElementById('root'));
+    const rootElement = document.getElementById('root');
+    const root = createRoot(rootElement);
+    root.render(<App />);
   </script>
 </head>
 <body style="margin: 0; overflow: hidden;">
-  <div id="root" class="bg-[#0D0D0D]"></div>
+  <div id="root" style="background-color: #0D0D0D;"></div>
 </body>
 </html>
