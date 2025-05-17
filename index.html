@@ -35,7 +35,6 @@
           <Canvas
             style={{ width: '100vw', height: '100vh' }}
             camera={{ position: [0, 0, 5], fov: 75 }}
-            gl={{ clearColor: 'black' }}
           >
             <Scene />
           </Canvas>
@@ -48,7 +47,7 @@
     root.render(<App />);
   </script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-  <div id="root" style="background-color: #0D0D0D;"></div>
+<body style="margin: 0; overflow: hidden; background-color: #0D0D0D;">
+  <div id="root"></div>
 </body>
 </html>
