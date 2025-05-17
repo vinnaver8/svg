@@ -3,129 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <title>Sticky Card with 3D Text Exit/Entry</title>
   <style>
-    /* Make room for 2 "pages" of scroll */
-    #scroll-container { height: 200vh; }
+    body {
+      height: 200vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
 
-    /* Pin the one card at vertical center */
-    #sticky-card {
+    .card {
       position: sticky;
       top: 50vh;
       transform: translateY(-50%);
-      perspective: 800px;               /* enable 3D*/
+      perspective: 1000px;
+      width: 300px;
+      margin: 0 auto;
     }
 
-    /* Hide all content slots by default */
-    .card-content { display: none; }
-
-    /* Visible slot */
-    .card-content.active { display: block; }
-
-    /* Animate the heading inside each slot */
-    .card-content h2 {
-      transform-origin: center bottom;
-      transition: transform 0.3s ease, opacity 0.3s ease;
+    .card-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      transform-origin: top center;
+      transition: transform 0.3s, opacity 0.3s;
     }
   </style>
 </head>
-<body class="bg-gray-100">
+<body>
 
-  <div id="scroll-container" class="relative">
-    <div id="sticky-card" class="w-full max-w-sm mx-auto">
-      <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-
-        <!-- Slot #1 -->
-        <div id="content-1" class="card-content p-6">
-          <div class="relative h-48 bg-gradient-to-tr from-purple-200 to-pink-200 rounded-t-2xl">
-            <h2 class="text-3xl font-bold text-gray-800 absolute top-4 left-4">Team</h2>
-            <!-- ...avatars/arrows as before... -->
-          </div>
-          <div class="p-4">
-            <h3 class="text-lg font-semibold">Collaborate</h3>
-            <p class="text-gray-500 text-sm">Enhance teamwork with powerful real-time collaboration features.</p>
-          </div>
-        </div>
-
-        <!-- Slot #2 -->
-        <div id="content-2" class="card-content p-6">
-          <div class="relative h-48 bg-gradient-to-br from-indigo-200 to-white rounded-t-2xl">
-            <h2 class="text-3xl font-bold text-gray-800 absolute top-4 left-4">Version History</h2>
-            <!-- ...icon/dropdown as before... -->
-          </div>
-          <div class="p-4">
-            <h3 class="text-lg font-semibold">Track Every Edit</h3>
-            <p class="text-gray-500 text-sm">Track every edit effortlessly, and never lose a single change.</p>
-          </div>
-        </div>
-
-      </div>
+  <div class="card">
+    <div class="card-content" id="cardContent">
+      <h2>Team</h2>
+      <p>Enhance teamwork with powerful real-time collaboration features.</p>
     </div>
   </div>
 
   <script>
-    (function() {
-      const container = document.getElementById('scroll-container');
-      const slots = Array.from(document.querySelectorAll('.card-content'));
-      const slotCount = slots.length;
-      const vh = window.innerHeight;
+    const cardContent = document.getElementById('cardContent');
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const maxScroll = document.body.scrollHeight - window.innerHeight;
+      const progress = scrollY / maxScroll;
 
-      // initialize
-      slots.forEach((s, i) => s.classList.toggle('active', i === 0));
+      const rotateX = Math.min(progress * 90, 90); // Rotate up to 90 degrees
+      const translateY = Math.min(progress * -100, -100); // Move up to -100px
+      const opacity = Math.max(1 - progress * 2, 0); // Fade out
 
-      function onScroll() {
-        const scrollY = window.scrollY;
-        const maxScroll = container.offsetHeight - vh;
-        const rawProg = Math.min(Math.max(scrollY / maxScroll, 0), 1);
-        // which slot to show
-        const slotIndex = Math.floor(rawProg * slotCount);
-        slots.forEach((slot, i) => slot.classList.toggle('active', i === slotIndex));
-
-        // now do heading 3D animation for the active slot
-        slots.forEach((slot, i) => {
-          const h2 = slot.querySelector('h2');
-          // compute local progress within this slot: 0→1 as you scroll past it
-          const slotStart = (i / slotCount) * maxScroll;
-          const local = Math.min(Math.max((scrollY - slotStart) / vh, 0), 1);
-
-          if (i === slotIndex) {
-            // entry region: local 0→0.2, keep heading flipped up and transparent
-            // visible region: local 0.2→0.8, heading normal
-            // exit region: local 0.8→1, flip heading away
-            let rot = 0, opa = 1;
-
-            if (local < 0.2) {
-              // still entering: flip-down from -90 to 0
-              const t = local / 0.2;
-              rot = -90 + 90 * t;      // -90deg → 0deg
-              opa = t;
-            } else if (local > 0.8) {
-              // exiting: flip-up from 0 to +90
-              const t = (local - 0.8) / 0.2;
-              rot = 0 + 90 * t;        // 0 → +90deg
-              opa = 1 - t;
-            }
-
-            h2.style.transform = `rotateX(${rot}deg)`;
-            h2.style.opacity   = opa;
-          } else {
-            // non-active slots: reset
-            if (h2) {
-              h2.style.transform = '';
-              h2.style.opacity   = '';
-            }
-          }
-        });
-      }
-
-      window.addEventListener('scroll', onScroll);
-      window.addEventListener('resize', () => {
-        vh = window.innerHeight;
-        onScroll();
-      });
-      onScroll();
-    })();
+      cardContent.style.transform = `rotateX(${rotateX}deg) translateY(${translateY}px)`;
+      cardContent.style.opacity = opacity;
+    });
   </script>
 
 </body>
