@@ -1,56 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>3D UI Example</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #111; }
-    .card {
-      width: 200px;
-      height: 120px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: sans-serif;
-    }
-  </style>
+  <title>Team Image Example</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/renderers/CSS3DRenderer.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<body class="p-8">
+  <!-- Container for image and overlays -->
+  <div class="relative inline-block">
+    <!-- User-provided image -->
+    <img src="lbox.png" alt="Team design image" class="block" />
 
+    <!-- Animated arrow icon (top-left, bouncing) -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="absolute top-2 left-2 h-8 w-8 text-white animate-bounce" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M14 13.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1 0-1h4.793L2.146 2.854a.5.5 0 1 1 .708-.708L13 12.293V7.5a.5.5 0 0 1 1 0z"/>
+    </svg>
+    <!-- Animated arrow icon (bottom-right, pulsing and rotated) -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="absolute bottom-2 right-2 h-8 w-8 text-white animate-pulse transform rotate-180" viewBox="0 0 16 16">
+      <path fill-rule="evenodd" d="M14 13.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1 0-1h4.793L2.146 2.854a.5.5 0 1 1 .708-.708L13 12.293V7.5a.5.5 0 0 1 1 0z"/>
+    </svg>
+
+    <!-- Invisible clickable overlay positioned over the "Team" text in the image -->
+    <div id="teamOverlay" class="absolute left-[220px] top-[360px] w-[140px] h-[50px] cursor-pointer"></div>
+    <!-- Overlay text that mimics the image's "Team"; changes on click -->
+    <span id="teamText" class="absolute left-[225px] top-[366px] text-black text-4xl transform scale-100 transition-all duration-200 ease-out">Team</span>
+  </div>
+
+  <!-- Minimal JavaScript to handle click on "Team" -->
   <script>
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.z = 400;
-
-    const renderer = new THREE.CSS3DRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // Create HTML card element
-    const div = document.createElement('div');
-    div.className = 'card';
-    div.innerHTML = 'Team';
-
-    // Convert HTML to 3D object
-    const card3D = new THREE.CSS3DObject(div);
-    scene.add(card3D);
-
-    // Animation using GSAP
-    gsap.from(card3D.position, { z: -500, duration: 2, ease: "power2.out" });
-
-    // Render loop
-    function animate() {
-      requestAnimationFrame(animate);
-      renderer.render(scene, camera);
-    }
-    animate();
+    document.getElementById('teamOverlay').addEventListener('click', function() {
+      const textEl = document.getElementById('teamText');
+      // Toggle blue color and scale on click
+      textEl.classList.toggle('text-blue-500');
+      textEl.classList.toggle('scale-110');
+    });
   </script>
 </body>
 </html>
