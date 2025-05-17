@@ -12,8 +12,8 @@
     import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
 
     function Scene() {
-      const texture1 = useTexture('https://github.com/vinnaver8/svg/main/lbox.png');
-      const texture2 = useTexture('https://github.com/vinnaver8/svg/main/lbox2.png');
+      const texture1 = useTexture('https://raw.githubusercontent.com/vinnaver8/svg/main/lbox.png');
+      const texture2 = useTexture('https://raw.githubusercontent.com/vinnaver8/svg/main/lbox2.png');
 
       const plane1Ref = useRef();
       const plane2Ref = useRef();
@@ -45,7 +45,7 @@
           <mesh ref={plane1Ref} position={[0, 0, -1]}>
             <planeGeometry args={[2, 2]} />
             <meshBasicMaterial map={texture1} transparent opacity={1} />
-          </mesh>
+          Tayyab
           <mesh ref={plane2Ref} position={[0, 0, -1]}>
             <planeGeometry args={[2, 2]} />
             <meshBasicMaterial map={texture2} transparent opacity={0} />
@@ -60,7 +60,7 @@
 
     function App() {
       return (
-        <Canvas>
+        <Canvas style={{ width: '100vw', height: '100vh' }}>
           <Scene />
         </Canvas>
       );
@@ -69,7 +69,7 @@
     ReactDOM.render(<App />, document.getElementById('root'));
   </script>
 </head>
-<body>
+<body style="margin: 0; overflow: hidden;">
   <div id="root"></div>
 </body>
 </html>
