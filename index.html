@@ -3,38 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pure Three.js Cube</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>3D Scroll Cards</title>
   <style>
-    body { margin: 0; overflow: hidden; background: black; }
-    canvas { display: block; }
+    .scroll-fade {
+      opacity: 0;
+      transform: translateY(50px) scale(0.95);
+      transition: all 0.9s ease-out;
+      will-change: transform, opacity;
+    }
+    .scroll-fade.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   </style>
 </head>
-<body>
-  <script type="module">
-    import * as THREE from 'https://unpkg.com/three@0.152.2/build/three.module.js';
+<body class="bg-gradient-to-b from-slate-100 to-white min-h-[300vh] relative">
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  <!-- CARD 1 -->
+  <div id="card1" class="scroll-fade max-w-sm mx-auto mt-32 relative bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div class="relative p-6 bg-gradient-to-tr from-purple-100 to-pink-200 h-52">
+      <h2 class="text-4xl font-bold text-gray-800 relative z-10">Team</h2>
 
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+      <!-- Floating Labels -->
+      <div class="absolute top-3 left-3 bg-blue-600 text-white text-sm px-3 py-1 rounded-full shadow-md z-20">John S.</div>
+      <div class="absolute bottom-3 right-3 bg-red-400 text-white text-sm px-3 py-1 rounded-full shadow-md z-20">Lilianna</div>
 
-    const geometry = new THREE.BoxGeometry();
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+      <!-- Arrows -->
+      <div class="absolute top-8 left-20 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-black rotate-45"></div>
+      <div class="absolute bottom-8 right-20 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-black rotate-45"></div>
+    </div>
+    <div class="p-5">
+      <h3 class="text-lg font-bold">Collaborate</h3>
+      <p class="text-sm text-gray-500">Enhance teamwork with powerful real-time collaboration features.</p>
+    </div>
+  </div>
 
-    camera.position.z = 5;
+  <!-- CARD 2 -->
+  <div id="card2" class="scroll-fade max-w-sm mx-auto mt-32 relative bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div class="relative p-6 bg-gradient-to-br from-indigo-200 to-white h-52">
+      <div class="absolute top-3 left-3 bg-blue-500 text-white text-sm px-2 py-1 rounded-full shadow">v1.2</div>
 
-    function animate() {
-      requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      renderer.render(scene, camera);
+      <!-- Fake Dropdown -->
+      <div class="absolute bottom-8 left-8 bg-white p-2 rounded-xl shadow-lg w-48 z-10">
+        <p class="text-sm font-semibold">Finn Hayes</p>
+        <p class="text-xs text-gray-500">Today, 3:18 PM</p>
+        <hr class="my-2" />
+        <p class="text-sm font-semibold">Zoe Quinn</p>
+        <p class="text-xs text-gray-500">Today, 1:59 PM</p>
+      </div>
+
+      <!-- History Icon -->
+      <div class="absolute -left-6 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white w-10 h-10 flex items-center justify-center rounded-full shadow-lg">
+        &#x21bb;
+      </div>
+    </div>
+    <div class="p-5">
+      <h3 class="text-lg font-bold">Version History</h3>
+      <p class="text-sm text-gray-500">Track every edit effortlessly, and never lose a single change.</p>
+    </div>
+  </div>
+
+  <script>
+    function onScrollAnimate() {
+      document.querySelectorAll('.scroll-fade').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        if (rect.top < window.innerHeight - 100) {
+          card.classList.add('active');
+        }
+      });
     }
 
-    animate();
+    window.addEventListener('scroll', onScrollAnimate);
+    window.addEventListener('load', onScrollAnimate);
   </script>
+
 </body>
 </html>
