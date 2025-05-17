@@ -2,10 +2,9 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Parallax “Team” Box</title>
+  <title>Fixed Team Box + Arrows</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* ensure smooth GPU‐accelerated animation */
     #teamSection {
       will-change: transform;
     }
@@ -13,70 +12,68 @@
 </head>
 <body class="bg-[#0D0D0D] text-white">
 
-  <section class="min-h-screen flex">
-    <!-- LEFT: parallax image box -->
-    <div class="w-1/2 flex justify-center overflow-hidden">
-      <div id="teamSection" class="relative inline-block top-20">
-        <img src="lbox.png"
-             alt="Team design image"
-             class="block w-[360px] h-[240px] md:w-[480px] md:h-[320px]" />
+<section class="min-h-screen flex">
+  <!-- LEFT: parallax box -->
+  <div class="w-1/2 flex justify-center items-start overflow-hidden">
+    <div id="teamSection" class="relative w-[360px] h-[240px] md:w-[480px] md:h-[320px] mt-20">
+      <!-- image -->
+      <img src="lbox.png"
+           alt="Team design"
+           class="w-full h-full object-cover rounded-lg" />
 
-        <!-- top-left bounce arrow -->
-        <svg xmlns="http://www.w3.org/2000/svg"
-             class="absolute top-4 left-4 h-8 w-8 text-white animate-bounce"
-             fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd"
-                d="M14 13.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1 0-1h4.793L2.146 2.854a.5.5 
-                   0 1 1 .708-.708L13 12.293V7.5a.5.5 0 0 1 1 0z"/>
-        </svg>
+      <!-- top-left arrow -->
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="absolute top-4 left-4 h-8 w-8 text-white animate-bounce"
+           fill="currentColor" viewBox="0 0 16 16">
+        <path fill-rule="evenodd"
+              d="M14 13.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1 0-1h4.793L2.146 2.854a.5.5 
+                 0 1 1 .708-.708L13 12.293V7.5a.5.5 0 0 1 1 0z"/>
+      </svg>
 
-        <!-- bottom-right pulse arrow -->
-        <svg xmlns="http://www.w3.org/2000/svg"
-             class="absolute bottom-4 right-4 h-8 w-8 text-white animate-pulse transform rotate-180"
-             fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd"
-                d="M14 13.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1 0-1h4.793L2.146 2.854a.5.5 
-                   0 1 1 .708-.708L13 12.293V7.5a.5.5 0 0 1 1 0z"/>
-        </svg>
+      <!-- bottom-right arrow -->
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="absolute bottom-4 right-4 h-8 w-8 text-white animate-bounce rotate-180"
+           fill="currentColor" viewBox="0 0 16 16">
+        <path fill-rule="evenodd"
+              d="M14 13.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1 0-1h4.793L2.146 2.854a.5.5 
+                 0 1 1 .708-.708L13 12.293V7.5a.5.5 0 0 1 1 0z"/>
+      </svg>
 
-        <!-- transparent click overlay -->
-        <button id="teamBtn" class="absolute inset-0"></button>
+      <!-- click area -->
+      <button id="teamBtn" class="absolute inset-0 focus:outline-none"></button>
 
-        <!-- faux “Team” text to recolor/scale -->
-        <span id="teamText"
-              class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
-                     text-black text-4xl font-bold transition-all duration-200">
-          Team
-        </span>
-      </div>
+      <!-- center “Team” text -->
+      <span id="teamText"
+            class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+                   text-black text-4xl font-bold transition-all duration-200">
+        Team
+      </span>
     </div>
+  </div>
 
-    <!-- RIGHT: tall scrollable content -->
-    <div class="w-1/2 p-8 space-y-8">
-      <div class="h-[150vh] bg-gray-900 rounded-lg p-4">
-        <h2 class="text-2xl mb-4">Your Right‐Side Content</h2>
-        <p>…scroll down or up to see the parallax effect on the left box…</p>
-      </div>
+  <!-- RIGHT: scrollable content -->
+  <div class="w-1/2 p-8 space-y-8">
+    <div class="h-[150vh] bg-gray-900 rounded-lg p-4">
+      <h2 class="text-2xl mb-4">Your Right-Side Content</h2>
+      <p>Scroll to see parallax + fixed overlay behavior.</p>
     </div>
-  </section>
+  </div>
+</section>
 
-  <script>
-    const teamSection = document.getElementById('teamSection');
-    // parallax multiplier: 1 = exact inverse, 0.5 = half speed, etc.
-    const speed = 1;
+<script>
+  const teamSection = document.getElementById('teamSection');
+  const speed = 1;
+  window.addEventListener('scroll', () => {
+    const offset = window.scrollY * speed;
+    teamSection.style.transform = `translateY(${offset}px)`;
+  });
 
-    window.addEventListener('scroll', () => {
-      const offset = window.scrollY * speed;
-      // move in opposite direction: positive scrollY moves element down
-      teamSection.style.transform = `translateY(${offset}px)`;
-    });
+  document.getElementById('teamBtn').addEventListener('click', () => {
+    const txt = document.getElementById('teamText');
+    txt.classList.toggle('text-blue-500');
+    txt.classList.toggle('scale-110');
+  });
+</script>
 
-    // click toggles blue + scale
-    document.getElementById('teamBtn').addEventListener('click', () => {
-      const txt = document.getElementById('teamText');
-      txt.classList.toggle('text-blue-500');
-      txt.classList.toggle('scale-110');
-    });
-  </script>
 </body>
 </html>
