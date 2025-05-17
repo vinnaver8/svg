@@ -12,8 +12,8 @@
     import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
 
     function Scene() {
-      const texture1 = useTexture('https://githubusercontent.com/vinnaver8/main/svg/lbox.png');
-      const texture2 = useTexture('https://githubusercontent.com/vinnaver8/main/svg/lbox2.png');
+      const texture1 = useTexture('lbox.png');
+      const texture2 = useTexture('lbox2.png');
 
       const plane1Ref = useRef();
       const plane2Ref = useRef();
@@ -45,7 +45,7 @@
           <mesh ref={plane1Ref} position={[0, 0, -1]}>
             <planeGeometry args={[2, 2]} />
             <meshBasicMaterial map={texture1} transparent opacity={1} />
-          Tayyab
+          </mesh>
           <mesh ref={plane2Ref} position={[0, 0, -1]}>
             <planeGeometry args={[2, 2]} />
             <meshBasicMaterial map={texture2} transparent opacity={0} />
