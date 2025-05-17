@@ -4,20 +4,16 @@
   <meta charset="UTF-8" />
   <title>GSAP DrawSVG on GitHub</title>
 
-  <!-- Tailwind (optional, but if you prefer plain CSS you can remove) -->
+  <!-- Tailwind (optional) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- GSAP core -->
+  <!-- GSAP core and DrawSVGPlugin -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <!-- DrawSVGPlugin (from unpkg) -->
   <script src="https://unpkg.com/gsap@3.12.2/dist/DrawSVGPlugin.min.js"></script>
 
   <style>
-    /* -------- your CSS -------- */
-    body {
+    html, body {
       margin: 0;
-      padding: 0;
-      width: 100%;
       height: 100vh;
       display: flex;
       align-items: center;
@@ -26,13 +22,11 @@
       overflow: hidden;
     }
     .container {
-      position: relative;
       width: 90vw;
       height: 90vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: space-evenly;
+      justify-content: center;
       border-radius: 9px;
     }
     #svg-stage {
@@ -40,9 +34,10 @@
       max-width: 750px;
       overflow: visible;
     }
-    /* ensure the path is ready to be drawn */
+    /* Make sure the path is fully hidden initially */
     #svg-stage path {
-      stroke-dasharray: 0 1000;
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
     }
   </style>
 </head>
@@ -59,10 +54,8 @@
       <defs>
         <linearGradient
           id="grad-1"
-          x1="0"
-          y1="0"
-          x2="100"
-          y2="100"
+          x1="0" y1="0"
+          x2="100" y2="100"
           gradientUnits="userSpaceOnUse"
         >
           <stop offset="0.2" stop-color="rgb(255, 135, 9)"></stop>
@@ -77,16 +70,25 @@
   </div>
 
   <script>
-    // wait until SVG is in the DOM
     window.addEventListener('load', () => {
-      const tl = gsap
-        .timeline({
-          repeat: -1,
-          defaults: { duration: 3, ease: 'power1.inOut' },
-        })
-        .set('#svg-stage', { opacity: 1 })
-        .from('path', { drawSVG: '0% 0%' })
-        .to('path', { drawSVG: '100% 100%' });
+      // Register the plugin
+      gsap.registerPlugin(DrawSVGPlugin);
+
+      const tl = gsap.timeline({
+        repeat: -1,
+        defaults: { duration: 3, ease: 'power1.inOut' }
+      });
+
+      tl
+       .set('#svg-stage', { opacity: 1 })
+       .to('#svg-stage path', { 
+         strokeDashoffset: 0,
+         duration: 3
+       })
+       .to('#svg-stage path', { 
+         strokeDashoffset: -1000,
+         duration: 3
+       });
     });
   </script>
 </body>
