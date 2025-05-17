@@ -4,78 +4,69 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>3D Scroll Cards</title>
+  <title>Scroll-Driven Card Transform</title>
   <style>
-    .scroll-fade {
-      opacity: 0;
-      transform: translateY(50px) scale(0.95);
-      transition: all 0.9s ease-out;
-      will-change: transform, opacity;
-    }
-    .scroll-fade.active {
-      opacity: 1;
-      transform: translateY(0) scale(1);
+    /* Base state: off to the left */
+    .slide-card {
+      position: sticky;
+      top: 50vh;                  /* pin at halfway down the viewport */
+      transform: translate(-100%, -50%);
+      transition: transform 0.1s linear;
+      will-change: transform;
     }
   </style>
 </head>
-<body class="bg-gradient-to-b from-slate-100 to-white min-h-[300vh] relative">
+<body class="bg-gray-50 min-h-[300vh]">
 
-  <!-- CARD 1 -->
-  <div id="card1" class="scroll-fade max-w-sm mx-auto mt-32 relative bg-white rounded-2xl shadow-xl overflow-hidden">
-    <div class="relative p-6 bg-gradient-to-tr from-purple-100 to-pink-200 h-52">
-      <h2 class="text-4xl font-bold text-gray-800 relative z-10">Team</h2>
+  <!-- Spacer to allow scrolling-in -->
+  <div class="h-screen"></div>
 
-      <!-- Floating Labels -->
-      <div class="absolute top-3 left-3 bg-blue-600 text-white text-sm px-3 py-1 rounded-full shadow-md z-20">John S.</div>
-      <div class="absolute bottom-3 right-3 bg-red-400 text-white text-sm px-3 py-1 rounded-full shadow-md z-20">Lilianna</div>
-
-      <!-- Arrows -->
-      <div class="absolute top-8 left-20 w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-black rotate-45"></div>
-      <div class="absolute bottom-8 right-20 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-black rotate-45"></div>
-    </div>
-    <div class="p-5">
-      <h3 class="text-lg font-bold">Collaborate</h3>
-      <p class="text-sm text-gray-500">Enhance teamwork with powerful real-time collaboration features.</p>
+  <!-- Container for card #1 -->
+  <div id="c1" class="h-screen flex items-center justify-center">
+    <div class="slide-card max-w-sm bg-white rounded-xl shadow-xl p-6">
+      <h3 class="text-xl font-semibold mb-2">Card One</h3>
+      <p class="text-gray-600">This card will slide in from left, sit centered, then slide out to right.</p>
     </div>
   </div>
 
-  <!-- CARD 2 -->
-  <div id="card2" class="scroll-fade max-w-sm mx-auto mt-32 relative bg-white rounded-2xl shadow-xl overflow-hidden">
-    <div class="relative p-6 bg-gradient-to-br from-indigo-200 to-white h-52">
-      <div class="absolute top-3 left-3 bg-blue-500 text-white text-sm px-2 py-1 rounded-full shadow">v1.2</div>
+  <!-- Spacer -->
+  <div class="h-screen"></div>
 
-      <!-- Fake Dropdown -->
-      <div class="absolute bottom-8 left-8 bg-white p-2 rounded-xl shadow-lg w-48 z-10">
-        <p class="text-sm font-semibold">Finn Hayes</p>
-        <p class="text-xs text-gray-500">Today, 3:18 PM</p>
-        <hr class="my-2" />
-        <p class="text-sm font-semibold">Zoe Quinn</p>
-        <p class="text-xs text-gray-500">Today, 1:59 PM</p>
-      </div>
-
-      <!-- History Icon -->
-      <div class="absolute -left-6 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white w-10 h-10 flex items-center justify-center rounded-full shadow-lg">
-        &#x21bb;
-      </div>
-    </div>
-    <div class="p-5">
-      <h3 class="text-lg font-bold">Version History</h3>
-      <p class="text-sm text-gray-500">Track every edit effortlessly, and never lose a single change.</p>
+  <!-- Container for card #2 -->
+  <div id="c2" class="h-screen flex items-center justify-center">
+    <div class="slide-card max-w-sm bg-white rounded-xl shadow-xl p-6">
+      <h3 class="text-xl font-semibold mb-2">Card Two</h3>
+      <p class="text-gray-600">Same effect here – independent timing, same code.</p>
     </div>
   </div>
+
+  <!-- Final spacer -->
+  <div class="h-screen"></div>
 
   <script>
-    function onScrollAnimate() {
-      document.querySelectorAll('.scroll-fade').forEach(card => {
-        const rect = card.getBoundingClientRect();
-        if (rect.top < window.innerHeight - 100) {
-          card.classList.add('active');
-        }
+    function updateSlides() {
+      document.querySelectorAll('.slide-card').forEach(card => {
+        const container = card.parentElement;
+        const rect = container.getBoundingClientRect();
+        const vh = window.innerHeight;
+
+        // when container top enters the bottom of viewport, start movement (progress 0)
+        // when container bottom reaches top of viewport, movement is complete (progress 1)
+        const start = vh;
+        const end = -rect.height;
+        const raw = (start - rect.top) / (start - end);
+        const progress = Math.min(Math.max(raw, 0), 1);
+
+        // map progress [0→1] to translateX from -100% → +100%
+        const x = (progress * 200) - 100;
+
+        card.style.transform = `translate(${x}%, -50%)`;
       });
     }
 
-    window.addEventListener('scroll', onScrollAnimate);
-    window.addEventListener('load', onScrollAnimate);
+    window.addEventListener('scroll', updateSlides);
+    window.addEventListener('resize', updateSlides);
+    window.addEventListener('load', updateSlides);
   </script>
 
 </body>
