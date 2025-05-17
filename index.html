@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Animation with Image Switch</title>
+  <script type="module">
+    import React, { useRef } from 'https://cdn.skypack.dev/react@17.0.2';
+    import ReactDOM from 'https://cdn.skypack.dev/react-dom@17.0.2';
+    import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber@7.0.24';
+    import { useTexture } from 'https://cdn.skypack.dev/@react-three/drei@7.27.0';
+    import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
+
+    function Scene() {
+      const texture1 = useTexture('https://via.placeholder.com/500x500?text=Image+1');
+      const texture2 = useTexture('https://via.placeholder.com/500x500?text=Image+2');
+
+      const plane1Ref = useRef();
+      const plane2Ref = useRef();
+      const boxRef = useRef();
+
+      useFrame((state, delta) => {
+        // Move the box
+        boxRef.current.position.x += 0.01;
+        if (boxRef.current.position.x > 5) boxRef.current.position.x = -5;
+
+        // Determine target opacities
+        const target1 = boxRef.current.position.x < 0 ? 1 : 0;
+        const target2 = boxRef.current.position.x < 0 ? 0 : 1;
+
+        // Smooth transition
+        const speed = 2;
+        if (plane1Ref.current) {
+          plane1Ref.current.material.opacity += (target1 - plane1Ref.current.material.opacity) * speed * delta;
+          plane1Ref.current.material.opacity = Math.min(1, Math.max(0, plane1Ref.current.material.opacity));
+        }
+        if (plane2Ref.current) {
+          plane2Ref.current.material.opacity += (target2 - plane2Ref.current.material.opacity) * speed * delta;
+          plane2Ref.current.material.opacity = Math.min(1, Math.max(0, plane2Ref.current.material.opacity));
+        }
+      });
+
+      return (
+        <>
+          <mesh ref={plane1Ref} position={[0, 0, -1]}>
+            <planeGeometry args={[2, 2]} />
+            <meshBasicMaterial map={texture1} transparent opacity={1} />
+          </mesh>
+          <mesh ref={plane2Ref} position={[0, 0, -1]}>
+            <planeGeometry args={[2, 2]} />
+            <meshBasicMaterial map={texture2} transparent opacity={0} />
+          </mesh>
+          <mesh ref={boxRef} position={[-1, 0, 0]}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshBasicMaterial color="red" />
+          </mesh>
+        </>
+      );
+    }
+
+    function App() {
+      return (
+        <Canvas>
+          <Scene />
+        </Canvas>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+</body>
+</html>
