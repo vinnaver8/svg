@@ -6,19 +6,17 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#0D0D0D] text-white">
-
-  <section class="min-h-screen flex">
+ <section class="min-h-screen flex">
     <!-- LEFT: sticky image box -->
     <div class="w-1/2 flex justify-center">
-      <div class="sticky top-20"> 
-        <div class="relative inline-block">
-          <!-- your “Team” image -->
-          <img src="lbox.png" 
-               alt="Team design image" 
-               class="block w-[360px] h-[240px] md:w-[480px] md:h-[320px]" />
-          
+  <div class="sticky top-20" id="teamSection">
+    <div class="relative inline-block">
+      <!-- your “Team” image -->
+      <img src="lbox.png" 
+           alt="Team design image" 
+           class="block w-[360px] h-[240px] md:w-[480px] md:h-[320px]" />
           <!-- top-left arrow -->
-          <svg xmlns="http://www.w3.org/2000/svg"
+  <svg xmlns="http://www.w3.org/2000/svg"
                class="absolute top-4 left-4 h-8 w-8 text-white animate-bounce"
                fill="currentColor" viewBox="0 0 16 16">
             <path fill-rule="evenodd" 
@@ -68,5 +66,19 @@
       txt.classList.toggle('scale-110');
     });
   </script>
-</body>
-</html>
+<script>
+  // Scroll into view on page load
+  window.addEventListener('load', () => {
+    document.getElementById('teamSection').scrollIntoView({
+      behavior: 'smooth'
+    });
+  });
+
+  // Toggle effect on click
+  document.getElementById('teamBtn').addEventListener('click', () => {
+    const txt = document.getElementById('teamText');
+    txt.classList.toggle('text-blue-500');
+    txt.classList.toggle('scale-110');
+  });
+</script>
+</body></html>
