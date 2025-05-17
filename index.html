@@ -2,71 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>Scroll-Driven Card Transform</title>
+  <title>Single Sticky Card, Multiple Contents</title>
   <style>
-    /* Base state: off to the left */
-    .slide-card {
+    /* ensure the scroll‐container is tall enough for two “pages” */
+    #scroll-container { height: 200vh; }
+    /* pin the card at mid‐viewport */
+    #sticky-card {
       position: sticky;
-      top: 50vh;                  /* pin at halfway down the viewport */
-      transform: translate(-100%, -50%);
-      transition: transform 0.1s linear;
-      will-change: transform;
+      top: 50vh;
+      transform: translateY(-50%);
     }
+    /* hide non‐active content */
+    .card-content { display: none; }
+    .card-content.active { display: block; }
   </style>
 </head>
-<body class="bg-gray-50 min-h-[300vh]">
+<body class="bg-gray-100">
 
-  <!-- Spacer to allow scrolling-in -->
-  <div class="h-screen"></div>
+  <div id="scroll-container" class="relative">
+    <!-- sticky wrapper -->
+    <div id="sticky-card" class="w-full max-w-sm mx-auto">
+      <div id="card" class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Content slot #1 -->
+        <div id="content-1" class="card-content p-6">
+          <div class="relative h-48 bg-gradient-to-tr from-purple-200 to-pink-200 rounded-t-2xl">
+            <h2 class="text-3xl font-bold text-gray-800 absolute top-4 left-4">Team</h2>
+            <div class="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs">John S.</div>
+            <div class="absolute bottom-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-xs">Lilianna</div>
+            <!-- arrows -->
+            <div class="absolute top-12 left-20 w-0 h-0 border-l-6 border-r-6 border-b-6 border-transparent border-b-black rotate-45"></div>
+            <div class="absolute bottom-12 right-20 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-black rotate-45"></div>
+          </div>
+          <div class="p-4">
+            <h3 class="text-lg font-semibold">Collaborate</h3>
+            <p class="text-gray-500 text-sm">Enhance teamwork with powerful real-time collaboration features.</p>
+          </div>
+        </div>
 
-  <!-- Container for card #1 -->
-  <div id="c1" class="h-screen flex items-center justify-center">
-    <div class="slide-card max-w-sm bg-white rounded-xl shadow-xl p-6">
-      <h3 class="text-xl font-semibold mb-2">Card One</h3>
-      <p class="text-gray-600">This card will slide in from left, sit centered, then slide out to right.</p>
+        <!-- Content slot #2 -->
+        <div id="content-2" class="card-content p-6">
+          <div class="relative h-48 bg-gradient-to-br from-indigo-200 to-white rounded-t-2xl">
+            <div class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs">v1.2</div>
+            <div class="absolute -left-6 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-lg">
+              &#x21bb;
+            </div>
+            <div class="absolute bottom-8 left-8 bg-white p-2 rounded-xl shadow-lg w-40 z-10 text-xs">
+              <p><strong>Finn Hayes</strong><br/>Today, 3:18 PM</p>
+              <hr class="my-1"/>
+              <p><strong>Zoe Quinn</strong><br/>Today, 1:59 PM</p>
+            </div>
+          </div>
+          <div class="p-4">
+            <h3 class="text-lg font-semibold">Version History</h3>
+            <p class="text-gray-500 text-sm">Track every edit effortlessly, and never lose a single change.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
-  <!-- Spacer -->
-  <div class="h-screen"></div>
-
-  <!-- Container for card #2 -->
-  <div id="c2" class="h-screen flex items-center justify-center">
-    <div class="slide-card max-w-sm bg-white rounded-xl shadow-xl p-6">
-      <h3 class="text-xl font-semibold mb-2">Card Two</h3>
-      <p class="text-gray-600">Same effect here – independent timing, same code.</p>
-    </div>
-  </div>
-
-  <!-- Final spacer -->
-  <div class="h-screen"></div>
 
   <script>
-    function updateSlides() {
-      document.querySelectorAll('.slide-card').forEach(card => {
-        const container = card.parentElement;
-        const rect = container.getBoundingClientRect();
-        const vh = window.innerHeight;
+    (function() {
+      const container = document.getElementById('scroll-container');
+      const contents = [
+        document.getElementById('content-1'),
+        document.getElementById('content-2')
+      ];
+      const total = contents.length;
+      // show the first slot initially
+      contents[0].classList.add('active');
 
-        // when container top enters the bottom of viewport, start movement (progress 0)
-        // when container bottom reaches top of viewport, movement is complete (progress 1)
-        const start = vh;
-        const end = -rect.height;
-        const raw = (start - rect.top) / (start - end);
-        const progress = Math.min(Math.max(raw, 0), 1);
+      function onScroll() {
+        const scrollY = window.scrollY;
+        const maxScroll = container.offsetHeight - window.innerHeight;
+        // normalized progress [0..1]
+        const progress = Math.min(Math.max(scrollY / maxScroll, 0), 1);
+        // pick slot index
+        const idx = Math.floor(progress * total);
+        contents.forEach((c,i) => {
+          c.classList.toggle('active', i === idx);
+        });
+      }
 
-        // map progress [0→1] to translateX from -100% → +100%
-        const x = (progress * 200) - 100;
-
-        card.style.transform = `translate(${x}%, -50%)`;
-      });
-    }
-
-    window.addEventListener('scroll', updateSlides);
-    window.addEventListener('resize', updateSlides);
-    window.addEventListener('load', updateSlides);
+      window.addEventListener('scroll', onScroll);
+      window.addEventListener('resize', onScroll);
+      // also init
+      onScroll();
+    })();
   </script>
 
 </body>
