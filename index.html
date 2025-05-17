@@ -3,76 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Animation with Image Switch</title>
+  <title>3D Animation with Black Background</title>
   <script type="module">
-    import React, { useRef, Suspense } from 'https://cdn.skypack.dev/react@17.0.2';
+    import React, { useRef } from 'https://cdn.skypack.dev/react@17.0.2';
     import ReactDOM from 'https://cdn.skypack.dev/react-dom@17.0.2';
     import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber@7.0.24';
-    import { useTexture } from 'https://cdn.skypack.dev/@react-three/drei@7.27.0';
     import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
 
     function Scene() {
-      // Try absolute URLs to confirm if relative paths are the issue
-      const texture1 = useTexture('https://raw.githubusercontent.com/vinnaver8/svg/main/lbox.png');
-      const texture2 = useTexture('https://raw.githubusercontent.com/vinnaver8/svg/main/lbox2.png');
-
-      // Debug: Log to confirm textures are loaded
-      console.log('Texture 1 loaded:', texture1);
-      console.log('Texture 2 loaded:', texture2);
-
-      const plane1Ref = useRef();
-      const plane2Ref = useRef();
-      const boxRef = useRef();
+      const cubeRef = useRef();
 
       useFrame((state, delta) => {
-        // Move the box
-        boxRef.current.position.x += 0.01;
-        if (boxRef.current.position.x > 5) boxRef.current.position.x = -5;
-
-        // Determine target opacities
-        const target1 = boxRef.current.position.x < 0 ? 1 : 0;
-        const target2 = boxRef.current.position.x < 0 ? 0 : 1;
-
-        // Smooth transition
-        const speed = 2;
-        if (plane1Ref.current) {
-          plane1Ref.current.material.opacity += (target1 - plane1Ref.current.material.opacity) * speed * delta;
-          plane1Ref.current.material.opacity = Math.min(1, Math.max(0, plane1Ref.current.material.opacity));
-        }
-        if (plane2Ref.current) {
-          plane2Ref.current.material.opacity += (target2 - plane2Ref.current.material.opacity) * speed * delta;
-          plane2Ref.current.material.opacity = Math.min(1, Math.max(0, plane2Ref.current.material.opacity));
-        }
+        // Rotate the cube for some animation
+        cubeRef.current.rotation.x += 0.01;
+        cubeRef.current.rotation.y += 0.01;
       });
 
       return (
-        <>
-          <mesh ref={plane1Ref} position={[0, 0, -1]}>
-            <planeGeometry args={[2, 2]} />
-            <meshBasicMaterial map={texture1} transparent opacity={1} />
-          </mesh>
-          <mesh ref={plane2Ref} position={[0, 0, -1]}>
-            <planeGeometry args={[2, 2]} />
-            <meshBasicMaterial map={texture2} transparent opacity={0} />
-          </mesh>
-          <mesh ref={boxRef} position={[-1, 0, 0]}>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshBasicMaterial color="red" />
-          </mesh>
-        </>
+        <mesh ref={cubeRef} position={[0, 0, 0]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshBasicMaterial color="green" />
+        </mesh>
       );
     }
 
     function App() {
       return (
-        <Canvas
-          style={{ width: '100vw', height: '100vh' }}
-          camera={{ position: [0, 0, 5], fov: 75 }} // Explicitly set camera position
-        >
-          <Suspense fallback={<mesh><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="blue" /></mesh>}>
+        <>
+          <div style={{ position: 'absolute', top: '10px', left: '10px', color: 'white' }}>
+            Loading 3D Scene...
+          </div>
+          <Canvas
+            style={{ width: '100vw', height: '100vh' }}
+            camera={{ position: [0, 0, 5], fov: 75 }}
+            gl={{ clearColor: 'black' }} // Set background to black
+          >
             <Scene />
-          </Suspense>
-        </Canvas>
+          </Canvas>
+        </>
       );
     }
 
