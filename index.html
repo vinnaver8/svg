@@ -2,213 +2,170 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Huly‐Style Draggable Pin Demo</title>
-  <!-- Tailwind CSS (JIT mode via CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- React + ReactDOM -->
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-
-  <!-- Framer Motion (for animation + drag) -->
-  <script src="https://unpkg.com/framer-motion/dist/framer-motion.umd.js" crossorigin></script>
-
-  <!-- Babel (to compile JSX in‐browser) -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+  <title>Huly‐Style Draggable Pin Demo (Vanilla JS)</title>
   <style>
-    body {
+    /* Basic reset & body styling */
+    * {
       margin: 0;
-      padding: 2rem;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
                    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
                    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
       background-color: #f9fafb;
       color: #111827;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+
+    /* Container for the “hero” section */
+    .hero-container {
+      position: relative;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-top: 4rem;
+    }
+
+    /* The main heading: "Knowledge at Your Fingertips" */
+    h2 {
+      font-size: 3rem;
+      line-height: 1.2;
+      font-weight: 600;
+      position: relative;
+    }
+
+    /* The span wrapping “Your Fingertips” text, used to position the pin */
+    .text-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Invisible placeholder to preserve layout while pin/animation overlays */
+    .text-wrapper .invisible {
+      color: transparent;
+    }
+
+    /* The draggable pin */
+    #pin {
+      position: absolute;
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background-image: url("https://huly.io/_next/static/media/blue-pin-image.bb230dcd.jpg");
+      background-size: cover;
+      background-position: center;
+      top: -35px;     /* final position relative to the text baseline */
+      left: 35px;     /* final position relative to the text baseline */
+      /* Start “offscreen” (fly‐in) state: moved by (35px, +25px) and invisible */
+      transform: translate(35px, 25px);
+      opacity: 0;
+      /* Smooth spring‐like transition (approximate) */
+      transition: 
+        transform 0.6s cubic-bezier(.17,.67,.83,.67), 
+        opacity 0.3s ease-in-out;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+      cursor: grab;
+      z-index: 10;
+    }
+    /* When we add the “visible” class, the pin flies to translate(0,0) and fades in */
+    #pin.visible {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    /* “Grab/grabbing” cursor states */
+    #pin.dragging {
+      cursor: grabbing;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+      transition: box-shadow 0.2s;
+    }
+
+    /* Optional: paragraph below the heading */
+    .hero-container p {
+      margin-top: 2rem;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: #4b5563;
     }
   </style>
 </head>
 <body>
-  <!-- React will mount here -->
-  <div id="root"></div>
 
-  <!-- ===== React + Framer Motion Code ===== -->
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    const { motion } = window["framer-motion"];
+  <div class="hero-container">
+    <!-- Main heading -->
+    <h2>
+      Knowledge at 
+      <br />
+      <!-- Wrap “Your Fingertips” so we can overlay the pin exactly -->
+      <span class="text-wrapper">
+        <!-- Invisible placeholder: keeps layout stable when pin overlays -->
+        <span class="invisible">Your Fingertips</span>
+        <!-- The pin itself -->
+        <span id="pin"></span>
+        <!-- The visible text (on top) -->
+        <span>Your Fingertips</span>
+      </span>
+    </h2>
 
-    // ===================================================================
-    // 1) FloatingPin Component
-    //    • Flys in from (0,0, opacity: 0) to (x: 35, y: -25, opacity: 1)
-    //    • Uses a spring transition like Huly.io
-    //    • After it’s visible, it can be dragged anywhere
-    // ===================================================================
-    function FloatingPin({ parentRef, avatarSrc, size = 66 }) {
-      // State to control when animation should start:
-      const [shouldAnimate, setShouldAnimate] = useState(false);
+    <!-- Paragraph below, as on Huly’s site -->
+    <p>
+      Huly offers a wide range of features to create and manage your 
+      project documentation. Huly’s suite of collaborative editing tools 
+      boosts team efficiency.
+    </p>
+  </div>
 
-      // When the component mounts, give a small delay to simulate
-      // “isFirstAnimationFinished” from Huly. In reality they wait on the
-      // “Your Fingertips” text animation (1.7s + .15s), but we’ll just wait 2s.
-      useEffect(() => {
-        const timer = setTimeout(() => setShouldAnimate(true), 2000);
-        return () => clearTimeout(timer);
-      }, []);
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const pin = document.getElementById("pin");
+      let isDragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
 
-      return (
-        <motion.span
-          // The exact Tailwind classes Huly uses for positioning & styling:
-          className={`
-            absolute
-            z-40
-            flex flex-col items-center
-            hover:cursor-grab
-            active:cursor-grabbing
-            group
-            right-[-38px]
-            top-[-38px]
-            text-blue
-            lg:-right-10 lg:-top-10
-            md:-right-7 md:-top-8
-            sm:right-[-22px]
-          `}
-          aria-hidden="true"
-          draggable={false}
-          style={{ userSelect: "none", touchAction: "none", transform: "translate(0px, 0px)" }}
+      // 1) Trigger the “fly‐in” animation about 1.85s after load:
+      //    (Huly waits on the text‐typing animation to finish; we approximate)
+      setTimeout(() => {
+        pin.classList.add("visible");
+      }, 1850);
 
-          // FRAMER MOTION PROPS:
-          //  • initial: start invisible & at (0,0)
-          //  • animate: move to (35, -25) and fade in
-          //  • We only trigger animate once shouldAnimate=true
-          initial={{ x: 0, y: 0, opacity: 0 }}
-          animate={shouldAnimate ? { x: 35, y: -25, opacity: 1 } : {}}
-          transition={{
-            type: "spring",
-            stiffness: 80,
-            damping: 12,
-            opacity: { duration: 0.3, delay: 0.2 },
-            x: { type: "spring", stiffness: 80, damping: 12, delay: 0.2 },
-            y: { type: "spring", stiffness: 80, damping: 12, delay: 0.2 }
-          }}
+      // 2) Drag‐and‐drop logic using pointer events
+      pin.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        isDragging = true;
+        // Calculate offset at pointerdown so the pin doesn’t “jump”
+        const rect = pin.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        pin.classList.add("dragging");
+        // Capture pointer so we continue receiving events outside the pin’s bounds
+        pin.setPointerCapture(e.pointerId);
+      });
 
-          // Enable dragging once it’s visible:
-          drag={shouldAnimate}
-          dragConstraints={parentRef}
-          dragElastic={0.2}
-        >
-          {/* === Circular Avatar === */}
-          <img
-            alt="Pin Avatar"
-            src={avatarSrc}
-            width={size}
-            height={size}
-            className={`
-              pointer-events-none
-              z-10
-              max-w-none
-              rounded-full
-              border-2 border-blue
-              shadow-[0px_6px_25px_0px_#00000080]
-              transition-all duration-200
-              group-active:translate-y-[-15px]
-              group-active:scale-[1.05]
-              group-active:shadow-[0px_14px_30px_0px_#00000080]
-              md:max-w-[45px]
-              sm:max-w-[36px]
-            `}
-            style={{ color: "transparent" }}
-            loading="lazy"
-          />
+      pin.addEventListener("pointermove", (e) => {
+        if (!isDragging) return;
+        // Compute new position relative to the containing block (.text-wrapper)
+        const parentRect = pin.parentElement.getBoundingClientRect();
+        let newLeft = e.clientX - parentRect.left - offsetX;
+        let newTop  = e.clientY - parentRect.top  - offsetY;
 
-          {/* === The “Stick” Beneath the Avatar === */}
-          <span className="
-            flex flex-col items-center
-            transition-transform duration-200
-            group-active:-translate-y-[25px]
-          ">
-            <span className="h-[46px] w-0.5 bg-blue md:h-[34px] md:w-px sm:h-[26px]"></span>
-            <span className="-mt-px h-2.5 w-2.5 rounded-full bg-blue md:h-[7px] md:w-[7px]"></span>
-          </span>
-        </motion.span>
-      );
-    }
+        // Apply the new position
+        pin.style.left = newLeft + "px";
+        pin.style.top  = newTop + "px";
+      });
 
-    // ===================================================================
-    // 2) HeroHeader Component
-    //    • Renders "Knowledge at Your Fingertips"
-    //    • Positions <FloatingPin> exactly where Huly places it
-    //    • Uses a ref as dragConstraints for the pin
-    // ===================================================================
-    function HeroHeader() {
-      const containerRef = useRef(null);
+      pin.addEventListener("pointerup", (e) => {
+        isDragging = false;
+        pin.classList.remove("dragging");
+        pin.releasePointerCapture(e.pointerId);
+      });
 
-      // Use Huly's exact "Your Fingertips" typewriter timings (not shown here),
-      // but we'll simply render static text for brevity.
-      // They start the pin animation once the text animation finishes (~1.85s).
-      // We simulate that with a 2s delay inside FloatingPin.
-
-      // Hardcode Huly's avatar URL, which matches their production asset:
-      const avatarUrl =
-        "https://huly.io/_next/static/media/blue-pin-image.bb230dcd.jpg";
-
-      return (
-        <div ref={containerRef} className="relative w-full max-w-xl mx-auto pt-20 pb-40">
-          {/* Static Part: "Knowledge at" */}
-          <h2
-            className="
-              relative
-              mt-[-40px]
-              max-w-xl
-              pt-[40px]
-              font-title
-              text-[80px]
-              font-semibold
-              leading-none
-              tracking-tighter
-              text-black
-              lg:text-[80px]
-              md:mt-[-30px] md:pt-[30px] md:text-[54px]
-              sm:text-[36px]
-              2xs:max-w-[268px]
-            "
-          >
-            {/* Huly uses an invisible span with intersection observer here; omitted for brevity */}
-            Knowledge at<br/>
-            <span className="relative inline-block">
-              {/* Invisible placeholder so layout stays fixed */}
-              <span className="invisible">Your Fingertips</span>
-              {/* Absolutely positioned animated text + pin */}
-              <span className="absolute left-0 top-7 lg:top-5 sm:top-2.5">
-                {/* In the real Huly, “Your Fingertips” is typed out letter by letter.
-                    Here, we’ll render it statically for simplicity: */}
-                <span className="inline-block">
-                  Your Fingertips
-                </span>
-
-                {/* The floating, draggable pin */}
-                <FloatingPin
-                  parentRef={containerRef}
-                  avatarSrc={avatarUrl}
-                  size={66}
-                />
-              </span>
-            </span>
-          </h2>
-
-          {/* Huly’s marketing copy under the heading */}
-          <p className="mt-10 lg:mt-9 md:mt-4 sm:mt-3 text-gray-700">
-            Huly offers a wide range of features to create and manage your
-            project documentation. Huly's suite of collaborative editing tools
-            boosts team efficiency.
-          </p>
-        </div>
-      );
-    }
-
-    // ===================================================================
-    // 3) Render into #root
-    // ===================================================================
-    ReactDOM.createRoot(document.getElementById("root")).render(<HeroHeader />);
+      pin.addEventListener("pointercancel", (e) => {
+        isDragging = false;
+        pin.classList.remove("dragging");
+        pin.releasePointerCapture(e.pointerId);
+      });
+    });
   </script>
 </body>
 </html>
