@@ -2,30 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Draggable Pin</title>
+  <title>Draggable Pin Integration</title>
   <style>
     body {
-      height: 100vh;
       margin: 0;
-      background: #f4f4f8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: sans-serif;
+      padding: 100px;
+      font-family: 'Arial', sans-serif;
+      background: #f9f9ff;
+      position: relative;
     }
+
+    h1 {
+      font-size: 60px;
+      position: relative;
+      z-index: 1;
+    }
+
     .pin {
-      width: 80px;
-      height: 80px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background-image: url('https://i.imgur.com/0y0y0y0.png'); /* replace with actual avatar URL */
+      background-image: url('https://i.imgur.com/0y0y0y0.png'); /* Replace with your avatar image */
       background-size: cover;
+      background-position: center;
       position: absolute;
-      top: 100px;
-      left: 100px;
+      top: 100px; /* Adjust as needed */
+      left: 118px; /* Adjust as needed */
       cursor: grab;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
       transition: box-shadow 0.2s;
+      z-index: 2;
     }
+
     .pin.dragging {
       cursor: grabbing;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
@@ -34,38 +42,39 @@
 </head>
 <body>
 
-<div class="pin" id="pin"></div>
+  <h1><strong>Knowledge</strong> at<br>Your Fingertip</h1>
+  <div class="pin" id="pin"></div>
 
-<script>
-  const pin = document.getElementById('pin');
-  let isDragging = false, offset = { x: 0, y: 0 };
+  <script>
+    const pin = document.getElementById('pin');
+    let isDragging = false, offset = { x: 0, y: 0 };
 
-  pin.addEventListener('pointerdown', (e) => {
-    isDragging = true;
-    offset = {
-      x: e.clientX - pin.offsetLeft,
-      y: e.clientY - pin.offsetTop
-    };
-    pin.classList.add('dragging');
-    pin.setPointerCapture(e.pointerId);
-  });
+    pin.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      offset = {
+        x: e.clientX - pin.offsetLeft,
+        y: e.clientY - pin.offsetTop
+      };
+      pin.classList.add('dragging');
+      pin.setPointerCapture(e.pointerId);
+    });
 
-  pin.addEventListener('pointermove', (e) => {
-    if (!isDragging) return;
-    pin.style.left = (e.clientX - offset.x) + 'px';
-    pin.style.top = (e.clientY - offset.y) + 'px';
-  });
+    pin.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      pin.style.left = (e.clientX - offset.x) + 'px';
+      pin.style.top = (e.clientY - offset.y) + 'px';
+    });
 
-  pin.addEventListener('pointerup', () => {
-    isDragging = false;
-    pin.classList.remove('dragging');
-  });
+    pin.addEventListener('pointerup', () => {
+      isDragging = false;
+      pin.classList.remove('dragging');
+    });
 
-  pin.addEventListener('pointercancel', () => {
-    isDragging = false;
-    pin.classList.remove('dragging');
-  });
-</script>
+    pin.addEventListener('pointercancel', () => {
+      isDragging = false;
+      pin.classList.remove('dragging');
+    });
+  </script>
 
 </body>
 </html>
