@@ -2,352 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Huly-Style Hero Preview</title>
+  <title>Draggable Huly-Style Pin Demo</title>
 
-  <!-- Tailwind CDN (in JIT mode by default) -->
+  <!-- Tailwind CDN (JIT mode) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- React & ReactDOM (development build, from UNPKG) -->
-  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
-
-  <!-- Babel Standalone (for in-browser JSX → JS) -->
-  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-
-  <!-- Basic page styling -->
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
-                   "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
-                   "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      font-family:
+        system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
+        "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
       background-color: #ffffff;
-      color: #000;
+      color: #000000;
     }
-    #root {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
+    /* Make text unselectable while dragging */
+    .no-select {
+      user-select: none;
     }
   </style>
 </head>
+<body class="p-8">
 
-<body>
-  <!-- React will render into this div -->
-  <div id="root"></div>
+  <div class="relative max-w-screen-md mx-auto">
+    <!-- STAR: Hero Section -->
+    <h1 class="text-5xl font-bold">
+      Knowledge at Your Fingertips
+    </h1>
 
-  <!-- ===== React + JSX Code ===== -->
-  <script type="text/babel">
-    // Pull React and ReactDOM from the global scope
-    const { useState, useEffect, useRef, Fragment } = React;
+    <!-- The container for our heading + draggable pin -->
+    <div class="relative mt-6 h-40 bg-gray-50 border rounded-lg">
+      <!-- Sample “Knowledge at …” sub-heading, so the pin has something to overlap -->
+      <h2 class="absolute top-8 left-8 text-4xl font-semibold">
+        Knowledge at<br />
+        Your Fingertips
+      </h2>
 
-    /************************************************************
-     * 1) useAnimatedText Hook
-     *    - Animates each character of `textSource` according to
-     *      the provided `timings` array (in ms).
-     *    - Uses IntersectionObserver so animation only starts once
-     *      the invisible wrapper <span> is at least 50% in view.
-     *    - Calls setIsFinished(true) when the final character appears.
-     ************************************************************/
-    function useAnimatedText({
-      textSource,
-      timings,
-      setIsFinished,
-      intersectionOptions = { rootMargin: "40px 0px 0px 0px", threshold: 0.5 }
-    }) {
-      const wrapperRef = useRef(null);
-      const [isInView, setInView] = useState(false);
-      const [visibleLetters, setVisibleLetters] = useState(
-        new Array(textSource.length).fill(false)
-      );
-
-      // 1️⃣ IntersectionObserver to watch wrapperRef
-      useEffect(() => {
-        if (!wrapperRef.current) return;
-
-        const observer = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                setInView(true);
-                observer.disconnect();
-              }
-            });
-          },
-          intersectionOptions
-        );
-
-        observer.observe(wrapperRef.current);
-        return () => observer.disconnect();
-      }, [wrapperRef, intersectionOptions]);
-
-      // 2️⃣ Once in view, schedule timeouts for each character
-      useEffect(() => {
-        if (!isInView) return;
-        const timeouts = [];
-
-        timings.forEach((delay, idx) => {
-          const t = setTimeout(() => {
-            setVisibleLetters((prev) => {
-              const next = [...prev];
-              next[idx] = true;
-              return next;
-            });
-            // If this is the last character, notify parent
-            if (idx === textSource.length - 1) {
-              setIsFinished(true);
-            }
-          }, delay);
-          timeouts.push(t);
-        });
-
-        // Cleanup if component unmounts early
-        return () => {
-          timeouts.forEach((t) => clearTimeout(t));
-        };
-      }, [isInView, timings, textSource.length, setIsFinished]);
-
-      // 3️⃣ Build the visible/invisible spans for each character
-      const renderedText = (
-        <span aria-hidden="true">
-          {textSource.split("").map((char, idx) => (
-            <span
-              key={idx}
-              className={`
-                inline-block 
-                transition-opacity 
-                duration-200
-                ${visibleLetters[idx] ? "opacity-100" : "opacity-0"}
-              `}
-            >
-              {char}
-            </span>
-          ))}
-        </span>
-      );
-
-      return { renderedText, wrapperRef };
-    }
-
-    /************************************************************
-     * 2) FloatingPin Component
-     *    - Reproduces Huly.io’s circular avatar + stick underneath.
-     *    - All “lift on click” animations are done via Tailwind’s
-     *      group-active:translate, scale, shadow classes.
-     *    - No extra JS needed for hover/active — pure CSS.
-     ************************************************************/
-    function FloatingPin({ parentRef, avatarSrc, size = 66 }) {
-      return (
-        <span
-          className="
-            absolute
-            z-40
-            flex flex-col items-center
-            hover:cursor-grab
-            active:cursor-grabbing
-            group
-            right-[-38px]
-            top-[-38px]
-            text-blue
-            lg:-right-10 lg:-top-10
-            md:-right-7 md:-top-8
-            sm:right-[-22px]
+      <!-- ===== Draggable Pin ===== -->
+      <span
+        id="draggable-pin"
+        class="
+          absolute
+          z-50
+          flex flex-col items-center
+          hover:cursor-grab active:cursor-grabbing group
+          right-[-38px] top-[-38px]
+          text-blue
+          lg:-right-10 lg:-top-10
+          md:-right-7 md:-top-8
+          sm:right-[-22px]
+          transition-all
+        "
+        draggable="false"
+        style="user-select: none; touch-action: none; transform: translate(0, 0);"
+      >
+        <!-- Circular avatar -->
+        <img
+          id="pin-img"
+          src="https://huly.io/_next/static/media/blue-pin-image.bb230dcd.jpg"
+          alt="Avatar Pin"
+          width="66"
+          height="66"
+          class="
+            pointer-events-none
+            z-10
+            max-w-none
+            rounded-full
+            border-2 border-blue
+            shadow-[0px_6px_25px_0px_#00000080]
+            transition-all duration-200
+            group-active:translate-y-[-15px]
+            group-active:scale-[1.05]
+            group-active:shadow-[0px_14px_30px_0px_#00000080]
+            md:max-w-[45px]
+            sm:max-w-[36px]
           "
-          aria-hidden="true"
-          draggable="false"
-          style={{
-            userSelect: "none",
-            touchAction: "none",
-            transform: "none"
-          }}
-          /* If you ever want to measure the heading:
-             ref={parentRef} 
-             Then parentRef.current.getBoundingClientRect() can be used in JS. 
-             Huly.io does not do any extra measurement here. */
+          style="color: transparent;"
+          loading="lazy"
+        />
+
+        <!-- Stick beneath avatar -->
+        <span
+          class="
+            flex flex-col items-center
+            transition-transform duration-200
+            group-active:-translate-y-[25px]
+          "
         >
-          {/* ==== The circular avatar image ==== */}
-          <img
-            alt="Avatar Pin"
-            src={avatarSrc}
-            width={size}
-            height={size}
-            className={`
-              pointer-events-none
-              z-10
-              max-w-none
-              rounded-full
-              border-2 border-blue
-              shadow-[0px_6px_25px_0px_#00000080]
-              transition-all duration-200
-              group-active:translate-y-[-15px]
-              group-active:scale-[1.05]
-              group-active:shadow-[0px_14px_30px_0px_#00000080]
-              md:max-w-[45px]
-              sm:max-w-[36px]
-            `}
-            style={{ color: "transparent" }}
-            loading="lazy"
-          />
-
-          {/* ==== The “stick” (vertical line + circle) beneath avatar ==== */}
-          <span
-            className="
-              flex flex-col items-center
-              transition-transform duration-200
-              group-active:-translate-y-[25px]
-            "
-          >
-            <span className="h-[46px] w-0.5 bg-blue md:h-[34px] md:w-px sm:h-[26px]"></span>
-            <span className="-mt-px h-2.5 w-2.5 rounded-full bg-blue md:h-[7px] md:w-[7px]"></span>
-          </span>
+          <span class="h-[46px] w-0.5 bg-blue md:h-[34px] md:w-px sm:h-[26px]"></span>
+          <span class="-mt-px h-2.5 w-2.5 rounded-full bg-blue md:h-[7px] md:w-[7px]"></span>
         </span>
-      );
-    }
+      </span>
+      <!-- ===== End Draggable Pin ===== -->
+    </div>
+    <!-- END: Hero Section -->
+  </div>
 
-    /************************************************************
-     * 3) HeroHeader Component
-     *    - Renders the "Knowledge at Your Fingertips" <h2> with:
-     *       • A hidden IntersectionObserver sentinel
-     *       • The animated "Your Fingertips" text (via useAnimatedText)
-     *       • The FloatingPin (avatar) positioned exactly as Huly.io does
-     *    - Below that, a static <p> description (same copy Huly uses).
-     ************************************************************/
-    function HeroHeader() {
-      // Track when the animation finishes
-      const [hasAnimationFinished, setAnimationFinished] = useState(false);
+  <!-- ===== JavaScript for Dragging ===== -->
+  <script>
+    (function() {
+      const pin = document.getElementById("draggable-pin");
+      let isDragging = false;
+      let offsetX = 0;
+      let offsetY = 0;
 
-      // Hook to animate "Your Fingertips"
-      const {
-        renderedText: typedText,
-        wrapperRef: textSentinelRef
-      } = useAnimatedText({
-        textSource: "Your Fingertips",
-        timings: [
-          0,    // "Y"
-          110,  // "o"
-          220,  // "u"
-          470,  // "r"
-          480,  // " "
-          540,  // "F"
-          650,  // "i"
-          760,  // "n"
-          870,  // "g"
-          1120, // "e"
-          1130, // "r"
-          1190, // "t"
-          1300, // "i"
-          1410, // "p"
-          1520  // "s"
-        ],
-        setIsFinished: setAnimationFinished,
-        intersectionOptions: {
-          rootMargin: "40px 0px 0px 0px",
-          threshold: 0.5
+      // Helper: get current translateX and translateY of the pin (in px)
+      function getCurrentTranslate(elem) {
+        const style = window.getComputedStyle(elem);
+        const transform = style.transform || style.webkitTransform || style.mozTransform;
+
+        // Default: no transform → (0, 0)
+        if (transform === "none" || !transform) {
+          return { x: 0, y: 0 };
         }
+
+        // Transform looks like "matrix(a, b, c, d, tx, ty)" or "matrix3d(...)"
+        const values = transform.match(/matrix.*(.+)/)[1].split(",").map(v => v.trim());
+        // matrix(a, b, c, d, tx, ty)
+        if (values.length === 6) {
+          return {
+            x: parseFloat(values[4]),
+            y: parseFloat(values[5])
+          };
+        }
+        // matrix3d(...) → the 13th and 14th items are tx, ty
+        if (values.length === 16) {
+          return {
+            x: parseFloat(values[12]),
+            y: parseFloat(values[13])
+          };
+        }
+        return { x: 0, y: 0 };
+      }
+
+      // Mousedown on pin: start dragging
+      pin.addEventListener("mousedown", function(e) {
+        e.preventDefault();
+        isDragging = true;
+
+        // Calculate where inside the pin the user clicked
+        const pinRect = pin.getBoundingClientRect();
+        offsetX = e.clientX - pinRect.left;
+        offsetY = e.clientY - pinRect.top;
+
+        // Add a class to disable text selection
+        document.body.classList.add("no-select");
+
+        // Add the CSS class that shows the “pressed” state (lift + scale)
+        pin.classList.add("active");
       });
 
-      // A ref for the <h2> itself (in case FloatingPin ever needed to measure)
-      const headingRef = useRef(null);
+      // Mousemove: if dragging, update pin position
+      document.addEventListener("mousemove", function(e) {
+        if (!isDragging) return;
 
-      // We’ll just use Huly’s actual PNG URL for the pin. You can replace
-      // with your own image if you want:
-      const avatarUrl =
-        "https://huly.io/_next/static/media/blue-pin-image.bb230dcd.jpg";
+        // Compute new top-left so that the cursor stays at (offsetX, offsetY) inside the pin
+        const container = pin.parentElement; // The relative‐positioned parent
+        const containerRect = container.getBoundingClientRect();
 
-      return (
-        <Fragment>
-          <h2
-            ref={headingRef}
-            className="
-              relative
-              mt-[-40px]             /* pull up so the pin overlaps */
-              max-w-xl
-              pt-[40px]
-              font-title
-              text-[80px]
-              font-semibold
-              leading-none
-              tracking-tighter
-              text-black
-              lg:text-[80px]
-              md:mt-[-30px] md:pt-[30px] md:text-[54px]
-              sm:text-[36px]
-              2xs:max-w-[268px]
-            "
-          >
-            {/* 
-              1) Invisible 1px-wide vertical line used as our IntersectionObserver sentinel
-                 (once it’s half-visible in the viewport, the animation of “Your Fingertips” begins).
-            */}
-            <span
-              ref={textSentinelRef}
-              className="absolute left-1/2 top-0 -z-10 h-full w-px"
-              aria-hidden="true"
-            />
+        let newX = e.clientX - containerRect.left - offsetX;
+        let newY = e.clientY - containerRect.top - offsetY;
 
-            {/* Static text: “Knowledge at” */}
-            Knowledge at
-            <br />
+        // Set transform style directly
+        pin.style.transform = `translate(${newX}px, ${newY}px)`;
+      });
 
-            {/* Animated “Your Fingertips” + the FloatingPin */}
-            <span className="relative">
-              {/* 
-                Invisible placeholder text so layout is reserved
-                (this prevents jumping when the typed letters appear).
-              */}
-              <span className="invisible">Your Fingertips</span>
+      // Mouseup: stop dragging
+      document.addEventListener("mouseup", function() {
+        if (!isDragging) return;
+        isDragging = false;
 
-              {/* 
-                Absolutely positioned over that placeholder:
-                  • typedText (per-letter spans)
-                  • FloatingPin (avatar + stick)
-              */}
-              <span
-                className="absolute left-0 top-7 lg:top-5 sm:top-2.5"
-                aria-hidden="true"
-              >
-                {/* 1) The typed‐out “Your Fingertips” letter by letter */}
-                {typedText}
+        // Remove “pressed” state
+        pin.classList.remove("active");
 
-                {/* 2) The circular avatar “pin” */}
-                <FloatingPin
-                  parentRef={headingRef}
-                  avatarSrc={avatarUrl}
-                  size={66}
-                />
-              </span>
-            </span>
-          </h2>
+        // Re‐enable text selection
+        document.body.classList.remove("no-select");
+      });
 
-          {/* 
-            Below the heading, Huly’s marketing copy:
-          */}
-          <p className="mt-10 lg:mt-9 md:mt-4 sm:mt-3 text-gray-700 max-w-xl">
-            Huly offers a wide range of features to create and manage your
-            project documentation. Huly’s suite of collaborative editing tools
-            boosts team efficiency.
-          </p>
-
-          {/* 
-            You can use hasAnimationFinished to trigger other content once
-            the typing animation finishes. Huly passes it down to another
-            component, but we’ll just log it here if you want:
-          */}
-          {hasAnimationFinished && (
-            <span className="mt-4 text-blue-600 font-medium">
-              Animation finished!
-            </span>
-          )}
-        </Fragment>
-      );
-    }
-
-    /************************************************************
-     * 4) Render <HeroHeader /> into the #root div
-     ************************************************************/
-    ReactDOM.render(<HeroHeader />, document.getElementById("root"));
+      // Also stop dragging if the user leaves the window
+      document.addEventListener("mouseleave", function() {
+        if (!isDragging) return;
+        isDragging = false;
+        pin.classList.remove("active");
+        document.body.classList.remove("no-select");
+      });
+    })();
   </script>
+  <!-- ===== End JavaScript ===== -->
+
 </body>
 </html>
