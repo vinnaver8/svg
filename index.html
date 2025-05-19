@@ -2,120 +2,352 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Huly-Style Hero Preview</title>
+
+  <!-- Tailwind CDN (in JIT mode by default) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <title>Scroll-Driven Card Animation (With lbox.png)</title>
+
+  <!-- React & ReactDOM (development build, from UNPKG) -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Babel Standalone (for in-browser JSX → JS) -->
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <!-- Basic page styling -->
   <style>
-    /* scroll space for 2 cards */
-    #scroll-container { height: 200vh; }
-    /* pin the card at vertical center */
-    #sticky-card {
-      position: sticky;
-      top: 50vh;
-      transform: translateY(-50%);
-      perspective: 600px;
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
+                   "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+                   "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      background-color: #ffffff;
+      color: #000;
     }
-    /* stack both content slots */
-    .card-content {
-      position: absolute;
-      inset: 0;
-    }
-    /* card shape */
-    #card {
-      overflow: hidden;
-      height: 350px;
-    }
-    /* elements we animate */
-    .animatable {
-      will-change: transform, opacity;
-      transition: none;
+    #root {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
     }
   </style>
 </head>
-<body class="bg-gray-100">
 
-  <div id="scroll-container" class="relative">
-    <!-- sticky wrapper -->
-    <div id="sticky-card" class="w-full max-w-sm mx-auto">
-      <div id="card" class="bg-white rounded-2xl shadow-xl relative">
+<body>
+  <!-- React will render into this div -->
+  <div id="root"></div>
 
-        <!-- SLOT 1 -->
-        <div id="slot-1" class="card-content p-6">
-          <!-- YOUR BOX WITH lbox.png -->
-          <div
-            class="relative w-full h-48 rounded-t-2xl overflow-hidden"
-            style="background-image: url('lbox.png'); background-size: cover; background-position: center;"
+  <!-- ===== React + JSX Code ===== -->
+  <script type="text/babel">
+    // Pull React and ReactDOM from the global scope
+    const { useState, useEffect, useRef, Fragment } = React;
+
+    /************************************************************
+     * 1) useAnimatedText Hook
+     *    - Animates each character of `textSource` according to
+     *      the provided `timings` array (in ms).
+     *    - Uses IntersectionObserver so animation only starts once
+     *      the invisible wrapper <span> is at least 50% in view.
+     *    - Calls setIsFinished(true) when the final character appears.
+     ************************************************************/
+    function useAnimatedText({
+      textSource,
+      timings,
+      setIsFinished,
+      intersectionOptions = { rootMargin: "40px 0px 0px 0px", threshold: 0.5 }
+    }) {
+      const wrapperRef = useRef(null);
+      const [isInView, setInView] = useState(false);
+      const [visibleLetters, setVisibleLetters] = useState(
+        new Array(textSource.length).fill(false)
+      );
+
+      // 1️⃣ IntersectionObserver to watch wrapperRef
+      useEffect(() => {
+        if (!wrapperRef.current) return;
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                setInView(true);
+                observer.disconnect();
+              }
+            });
+          },
+          intersectionOptions
+        );
+
+        observer.observe(wrapperRef.current);
+        return () => observer.disconnect();
+      }, [wrapperRef, intersectionOptions]);
+
+      // 2️⃣ Once in view, schedule timeouts for each character
+      useEffect(() => {
+        if (!isInView) return;
+        const timeouts = [];
+
+        timings.forEach((delay, idx) => {
+          const t = setTimeout(() => {
+            setVisibleLetters((prev) => {
+              const next = [...prev];
+              next[idx] = true;
+              return next;
+            });
+            // If this is the last character, notify parent
+            if (idx === textSource.length - 1) {
+              setIsFinished(true);
+            }
+          }, delay);
+          timeouts.push(t);
+        });
+
+        // Cleanup if component unmounts early
+        return () => {
+          timeouts.forEach((t) => clearTimeout(t));
+        };
+      }, [isInView, timings, textSource.length, setIsFinished]);
+
+      // 3️⃣ Build the visible/invisible spans for each character
+      const renderedText = (
+        <span aria-hidden="true">
+          {textSource.split("").map((char, idx) => (
+            <span
+              key={idx}
+              className={`
+                inline-block 
+                transition-opacity 
+                duration-200
+                ${visibleLetters[idx] ? "opacity-100" : "opacity-0"}
+              `}
+            >
+              {char}
+            </span>
+          ))}
+        </span>
+      );
+
+      return { renderedText, wrapperRef };
+    }
+
+    /************************************************************
+     * 2) FloatingPin Component
+     *    - Reproduces Huly.io’s circular avatar + stick underneath.
+     *    - All “lift on click” animations are done via Tailwind’s
+     *      group-active:translate, scale, shadow classes.
+     *    - No extra JS needed for hover/active — pure CSS.
+     ************************************************************/
+    function FloatingPin({ parentRef, avatarSrc, size = 66 }) {
+      return (
+        <span
+          className="
+            absolute
+            z-40
+            flex flex-col items-center
+            hover:cursor-grab
+            active:cursor-grabbing
+            group
+            right-[-38px]
+            top-[-38px]
+            text-blue
+            lg:-right-10 lg:-top-10
+            md:-right-7 md:-top-8
+            sm:right-[-22px]
+          "
+          aria-hidden="true"
+          draggable="false"
+          style={{
+            userSelect: "none",
+            touchAction: "none",
+            transform: "none"
+          }}
+          /* If you ever want to measure the heading:
+             ref={parentRef} 
+             Then parentRef.current.getBoundingClientRect() can be used in JS. 
+             Huly.io does not do any extra measurement here. */
+        >
+          {/* ==== The circular avatar image ==== */}
+          <img
+            alt="Avatar Pin"
+            src={avatarSrc}
+            width={size}
+            height={size}
+            className={`
+              pointer-events-none
+              z-10
+              max-w-none
+              rounded-full
+              border-2 border-blue
+              shadow-[0px_6px_25px_0px_#00000080]
+              transition-all duration-200
+              group-active:translate-y-[-15px]
+              group-active:scale-[1.05]
+              group-active:shadow-[0px_14px_30px_0px_#00000080]
+              md:max-w-[45px]
+              sm:max-w-[36px]
+            `}
+            style={{ color: "transparent" }}
+            loading="lazy"
+          />
+
+          {/* ==== The “stick” (vertical line + circle) beneath avatar ==== */}
+          <span
+            className="
+              flex flex-col items-center
+              transition-transform duration-200
+              group-active:-translate-y-[25px]
+            "
           >
-            <!-- slot 1 elements -->
-            <h2 id="h1" class="animatable text-3xl font-bold text-gray-800 absolute top-4 left-4">Team</h2>
-            <div id="b1" class="animatable absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded-full text-xs">John S.</div>
-            <div id="b2" class="animatable absolute bottom-2 right-2 bg-red-400 text-white px-2 py-1 rounded-full text-xs">Lilianna</div>
-            <div id="a1" class="animatable absolute top-12 left-20 w-0 h-0 border-l-6 border-r-6 border-b-6 border-transparent border-b-black rotate-45"></div>
-            <div id="a2" class="animatable absolute bottom-12 right-20 w-0 h-0 border-l-6 border-r-6 border-t-6 border-transparent border-t-black rotate-45"></div>
-          </div>
-          <div class="p-4">
-            <h3 id="t1" class="animatable text-lg font-semibold">Collaborate</h3>
-            <p id="p1" class="animatable text-gray-500 text-sm">Enhance teamwork with powerful real-time collaboration features.</p>
-          </div>
-        </div>
+            <span className="h-[46px] w-0.5 bg-blue md:h-[34px] md:w-px sm:h-[26px]"></span>
+            <span className="-mt-px h-2.5 w-2.5 rounded-full bg-blue md:h-[7px] md:w-[7px]"></span>
+          </span>
+        </span>
+      );
+    }
 
-        <!-- SLOT 2 -->
-        <div id="slot-2" class="card-content p-6">
-          <div class="relative w-full h-48 rounded-t-2xl overflow-hidden bg-gradient-to-br from-indigo-200 to-white">
-            <div id="b3" class="animatable absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs">v1.2</div>
-            <div id="a3" class="animatable absolute -left-6 top-1/2 transform -translate-y-1/2 bg-blue-500 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-lg">&#x21bb;</div>
-            <div id="d1" class="animatable absolute bottom-8 left-8 bg-white p-2 rounded-xl shadow-lg w-40 text-xs">
-              <p><strong>Finn Hayes</strong><br/>Today, 3:18 PM</p>
-              <hr class="my-1"/>
-              <p><strong>Zoe Quinn</strong><br/>Today, 1:59 PM</p>
-            </div>
-          </div>
-          <div class="p-4">
-            <h3 id="t2" class="animatable text-lg font-semibold">Version History</h3>
-            <p id="p2" class="animatable text-gray-500 text-sm">Track every edit effortlessly, and never lose a single change.</p>
-          </div>
-        </div>
+    /************************************************************
+     * 3) HeroHeader Component
+     *    - Renders the "Knowledge at Your Fingertips" <h2> with:
+     *       • A hidden IntersectionObserver sentinel
+     *       • The animated "Your Fingertips" text (via useAnimatedText)
+     *       • The FloatingPin (avatar) positioned exactly as Huly.io does
+     *    - Below that, a static <p> description (same copy Huly uses).
+     ************************************************************/
+    function HeroHeader() {
+      // Track when the animation finishes
+      const [hasAnimationFinished, setAnimationFinished] = useState(false);
 
-      </div>
-    </div>
-  </div>
+      // Hook to animate "Your Fingertips"
+      const {
+        renderedText: typedText,
+        wrapperRef: textSentinelRef
+      } = useAnimatedText({
+        textSource: "Your Fingertips",
+        timings: [
+          0,    // "Y"
+          110,  // "o"
+          220,  // "u"
+          470,  // "r"
+          480,  // " "
+          540,  // "F"
+          650,  // "i"
+          760,  // "n"
+          870,  // "g"
+          1120, // "e"
+          1130, // "r"
+          1190, // "t"
+          1300, // "i"
+          1410, // "p"
+          1520  // "s"
+        ],
+        setIsFinished: setAnimationFinished,
+        intersectionOptions: {
+          rootMargin: "40px 0px 0px 0px",
+          threshold: 0.5
+        }
+      });
 
-  <script>
-    ;(function() {
-      const container = document.getElementById('scroll-container');
-      const vh = window.innerHeight;
-      const maxScroll = () => container.offsetHeight - vh;
+      // A ref for the <h2> itself (in case FloatingPin ever needed to measure)
+      const headingRef = useRef(null);
 
-      // Gather all elements to animate
-      const slot1Els = ['h1','b1','b2','a1','a2','t1','p1'].map(id => document.getElementById(id));
-      const slot2Els = ['b3','a3','d1','t2','p2'].map(id => document.getElementById(id));
+      // We’ll just use Huly’s actual PNG URL for the pin. You can replace
+      // with your own image if you want:
+      const avatarUrl =
+        "https://huly.io/_next/static/media/blue-pin-image.bb230dcd.jpg";
 
-      function update() {
-        const prog = Math.min(Math.max(window.scrollY / maxScroll(), 0), 1);
-        const half = 0.5;
-        // progress for slot1: 0→1 over first half
-        const p1 = Math.min(Math.max((prog - 0) / half, 0), 1);
-        // progress for slot2: 0→1 over second half
-        const p2 = Math.min(Math.max((prog - half) / half, 0), 1);
+      return (
+        <Fragment>
+          <h2
+            ref={headingRef}
+            className="
+              relative
+              mt-[-40px]             /* pull up so the pin overlaps */
+              max-w-xl
+              pt-[40px]
+              font-title
+              text-[80px]
+              font-semibold
+              leading-none
+              tracking-tighter
+              text-black
+              lg:text-[80px]
+              md:mt-[-30px] md:pt-[30px] md:text-[54px]
+              sm:text-[36px]
+              2xs:max-w-[268px]
+            "
+          >
+            {/* 
+              1) Invisible 1px-wide vertical line used as our IntersectionObserver sentinel
+                 (once it’s half-visible in the viewport, the animation of “Your Fingertips” begins).
+            */}
+            <span
+              ref={textSentinelRef}
+              className="absolute left-1/2 top-0 -z-10 h-full w-px"
+              aria-hidden="true"
+            />
 
-        // Slot1: fly up & fade out
-        slot1Els.forEach(el => {
-          el.style.transform = `translateY(${ -100 * p1 }px)`;
-          el.style.opacity   = `${1 - p1}`;
-        });
+            {/* Static text: “Knowledge at” */}
+            Knowledge at
+            <br />
 
-        // Slot2: fly in from above & fade in
-        slot2Els.forEach(el => {
-          el.style.transform = `translateY(${ -100 * (1 - p2) }px)`;
-          el.style.opacity   = `${p2}`;
-        });
-      }
+            {/* Animated “Your Fingertips” + the FloatingPin */}
+            <span className="relative">
+              {/* 
+                Invisible placeholder text so layout is reserved
+                (this prevents jumping when the typed letters appear).
+              */}
+              <span className="invisible">Your Fingertips</span>
 
-      window.addEventListener('scroll', update);
-      window.addEventListener('resize', update);
-      update();
-    })();
+              {/* 
+                Absolutely positioned over that placeholder:
+                  • typedText (per-letter spans)
+                  • FloatingPin (avatar + stick)
+              */}
+              <span
+                className="absolute left-0 top-7 lg:top-5 sm:top-2.5"
+                aria-hidden="true"
+              >
+                {/* 1) The typed‐out “Your Fingertips” letter by letter */}
+                {typedText}
+
+                {/* 2) The circular avatar “pin” */}
+                <FloatingPin
+                  parentRef={headingRef}
+                  avatarSrc={avatarUrl}
+                  size={66}
+                />
+              </span>
+            </span>
+          </h2>
+
+          {/* 
+            Below the heading, Huly’s marketing copy:
+          */}
+          <p className="mt-10 lg:mt-9 md:mt-4 sm:mt-3 text-gray-700 max-w-xl">
+            Huly offers a wide range of features to create and manage your
+            project documentation. Huly’s suite of collaborative editing tools
+            boosts team efficiency.
+          </p>
+
+          {/* 
+            You can use hasAnimationFinished to trigger other content once
+            the typing animation finishes. Huly passes it down to another
+            component, but we’ll just log it here if you want:
+          */}
+          {hasAnimationFinished && (
+            <span className="mt-4 text-blue-600 font-medium">
+              Animation finished!
+            </span>
+          )}
+        </Fragment>
+      );
+    }
+
+    /************************************************************
+     * 4) Render <HeroHeader /> into the #root div
+     ************************************************************/
+    ReactDOM.render(<HeroHeader />, document.getElementById("root"));
   </script>
-
 </body>
 </html>
